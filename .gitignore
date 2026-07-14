@@ -1,7 +1,8 @@
 # ---- Build outputs: never commit compiled artifacts or images ----
+# NOTE: anchored with a leading slash so this only matches the top-level build
+# output dir, NOT docs/build/ (which holds BUILD.md and must be tracked).
 /build/
-build/
-deploy/
+/deploy/
 *.img
 *.img.xz
 *.wic
