@@ -77,6 +77,21 @@ which downloads linux-stable 6.18.38, applies the k3 patch set, and builds the
 `Image`, device trees, and modules. Optional Debian package via `./build_deb.sh`
 inside the submodule.
 
+Artifacts are collected into the common **`build/kernel/`** folder (alongside the
+u-boot boot files in `build/deploy/`), so every compiled image lives under
+`build/`:
+
+```
+build/kernel/
+  6.18.38-arm64-k3-r45.Image             # kernel image
+  6.18.38-arm64-k3-r45-dtbs.tar.zst      # device trees
+  6.18.38-arm64-k3-r45-modules.tar.zst   # loadable modules
+  config-6.18.38-arm64-k3-r45            # the .config used
+```
+
+(The originals also remain in `sources/arm64-multiplatform/deploy/`.) All of
+`build/` is git-ignored.
+
 ## 4. Deploy to SD card
 
 > Reference production image: **BBAI64 Debian 13.5 2026-05-19 XFCE (v6.18.x-k3)**.

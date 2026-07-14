@@ -24,10 +24,26 @@ cd "${KDIR}"
 echo ">> building kernel (this downloads linux-stable + toolchain on first run)"
 ./build_kernel.sh
 
+# Collect kernel artifacts into the common build/ folder (alongside the u-boot
+# boot files in build/deploy), so every compiled image lives under build/.
+KDEPLOY="${KDIR}/deploy"
+DEST="${ROOT}/build/kernel"
+echo ">> collecting kernel artifacts into ${DEST}"
+mkdir -p "${DEST}"
+shopt -s nullglob
+copied=0
+for f in "${KDEPLOY}"/*.Image "${KDEPLOY}"/*-dtbs.tar.zst \
+         "${KDEPLOY}"/*-modules.tar.zst "${KDEPLOY}"/config-*; do
+  cp -v "${f}" "${DEST}/"; copied=$((copied+1))
+done
+shopt -u nullglob
+[ "${copied}" -gt 0 ] || echo "!! no kernel artifacts found in ${KDEPLOY}" >&2
+
 cat <<EOF
 
-Kernel build finished. Artifacts under:
-  ${KDIR}/deploy/        (Image, dtbs, config, modules tarball)
+Kernel build finished. Artifacts collected under:
+  ${DEST}/        (Image, dtbs, config, modules tarball)
+(originals also remain in ${KDEPLOY}/)
 
 Optional Debian package:
   (cd ${KDIR} && ./build_deb.sh)
