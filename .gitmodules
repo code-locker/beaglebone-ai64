@@ -1,0 +1,6 @@
+[submodule "sources/u-boot"]
+	path = sources/u-boot
+	url = git@github.com:code-locker/u-boot.git
+[submodule "sources/arm64-multiplatform"]
+	path = sources/arm64-multiplatform
+	url = git@github.com:code-locker/arm64-multiplatform.git
