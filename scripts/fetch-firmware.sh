@@ -15,6 +15,21 @@ mkdir -p "${SRC}"
 # read one field (url=$2 ref=$3 sha=$4) for a component from versions.lock
 lock_field() { awk -v c="$1" -v n="$2" '$1==c{print $n}' "${LOCK}"; }
 
+RETRIES="${RETRIES:-4}"
+
+# retry a command up to $RETRIES times with backoff — survives transient
+# DNS/network blips (e.g. "Could not resolve host: github.com").
+retry() {
+  local n=1
+  until "$@"; do
+    if [ "${n}" -ge "${RETRIES}" ]; then
+      echo "!! failed after ${RETRIES} attempts: $*" >&2; return 1
+    fi
+    echo ">> attempt ${n}/${RETRIES} failed, retrying in $((n*5))s ..." >&2
+    sleep "$((n*5))"; n=$((n+1))
+  done
+}
+
 clone_pinned() {
   local name="$1" dir="${SRC}/$1"
   local url ref sha
@@ -28,10 +43,12 @@ clone_pinned() {
 
   if [ ! -d "${dir}/.git" ]; then
     echo ">> cloning ${name} (${ref})"
-    git clone "${url}" "${dir}"
+    # remove any partial dir left by a failed clone so the retry is clean
+    rm -rf "${dir}"
+    retry git clone "${url}" "${dir}"
   fi
   echo ">> pinning ${name} -> ${sha}"
-  git -C "${dir}" fetch --tags origin
+  retry git -C "${dir}" fetch --tags origin
   git -C "${dir}" checkout --quiet "${sha}"
 }
 
