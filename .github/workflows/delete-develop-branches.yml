@@ -1,0 +1,49 @@
+name: Delete branch after merge to develop
+
+# Deletes the source (head) branch only when a PR is merged into `develop`.
+# PRs merged into `main` (releases) keep their branch. This is the "develop-only"
+# alternative to the repo-wide "Automatically delete head branches" toggle —
+# keep that toggle OFF so this workflow is the sole deleter.
+
+on:
+  pull_request:
+    types: [closed]
+
+# Least-privilege: only allow deleting refs in this repo.
+permissions:
+  contents: write
+
+jobs:
+  delete-head-branch:
+    # Only when: the PR was actually merged (not just closed), the base is
+    # develop, and the head branch lives in THIS repo (not a fork).
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'develop' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete merged head branch
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = context.payload.pull_request.head.ref;
+            // Never delete long-lived integration branches, just in case.
+            if (['main', 'develop'].includes(branch)) {
+              core.info(`Refusing to delete protected branch '${branch}'.`);
+              return;
+            }
+            try {
+              await github.rest.git.deleteRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `heads/${branch}`,
+              });
+              core.info(`Deleted branch '${branch}'.`);
+            } catch (err) {
+              if (err.status === 422) {
+                core.info(`Branch '${branch}' already gone.`);
+              } else {
+                throw err;
+              }
+            }
