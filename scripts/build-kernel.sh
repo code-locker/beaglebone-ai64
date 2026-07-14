@@ -10,7 +10,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 KDIR="${ROOT}/sources/arm64-multiplatform"
 
-[ -d "${KDIR}/.git" ] || { echo "!! ${KDIR} missing. Run ./scripts/bootstrap.sh first." >&2; exit 1; }
+# Check the submodule is populated. NOTE: a git submodule's .git is a FILE
+# (a gitlink), not a directory — so test for the build script we actually need.
+[ -f "${KDIR}/build_kernel.sh" ] || { echo "!! ${KDIR} not populated. Run ./scripts/bootstrap.sh first." >&2; exit 1; }
 
 # system.sh is required by the build system; seed it from the sample once.
 if [ ! -f "${KDIR}/system.sh" ]; then
