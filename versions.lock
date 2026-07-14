@@ -1,0 +1,20 @@
+# versions.lock
+#
+# Exact upstream commits this workspace was built against for the
+# BeagleBone AI-64 (TDA4VM / J721E) target, matching the reference image:
+#
+#   BBAI64 Debian 13.5 2026-05-19 XFCE (v6.18.x-k3)
+#
+# Format: <component> <upstream-url> <ref/tag> <commit-sha>
+# Bump these deliberately; the build scripts read them so a fresh clone
+# reproduces the same binaries.
+
+u-boot               https://github.com/beagleboard/u-boot.git                 v2026.01-Beagle       5c82fb688432c62e74af05fcc6aaa6d0e99d8c1b
+arm64-multiplatform  https://github.com/RobertCNelson/arm64-multiplatform.git  v6.18.x-arm64-k3      54234a65cb24a574fff76f450ce7955503604aa8
+linux-kernel         https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git  v6.18.38  6.18.38-arm64-k3-r45
+optee_os             https://github.com/OP-TEE/optee_os.git                    4.10.0                298746f9e2907886dcf68a0586b9fb0671ad7043
+trusted-firmware-a   https://git.trustedfirmware.org/TF-A/trusted-firmware-a.git  master             b5eaba47efc5e4e3029086d5c25eee0e8dbb0129
+ti-linux-firmware    https://github.com/TexasInstruments/ti-linux-firmware.git  ti-linux-firmware    8f8592375a7930bcf41feff1bb26a5aae46857ae
+
+# Toolchain: aarch64 GCC (nolibc) 15.2.0 — auto-downloaded by the kernel build
+#   https://mirrors.edge.kernel.org/pub/tools/crosstool/

@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+#
+# add-submodules.sh — ONE-TIME setup. Wires sources/u-boot and
+# sources/arm64-multiplatform as git submodules pointing at YOUR forks.
+#
+# Prereq: fork these on GitHub first (see GITHUB-SETUP.md):
+#   beagleboard/u-boot                -> code-locker/u-boot
+#   RobertCNelson/arm64-multiplatform -> code-locker/arm64-multiplatform
+#
+# To avoid re-downloading ~9 GB, this reuses your existing local clones as a
+# git "reference" if REF_UBOOT / REF_KBUILD point at them.
+#
+# SPDX-License-Identifier: MIT
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${ROOT}"
+
+GH_USER="${GH_USER:-code-locker}"
+
+# Optional: existing local clones to speed up the add (set to your paths).
+REF_UBOOT="${REF_UBOOT:-/media/abhishekkumark/cf83b77e-dc34-45e6-9518-252c12d6896b/Courses/BBB/build/u-boot}"
+REF_KBUILD="${REF_KBUILD:-/media/abhishekkumark/cf83b77e-dc34-45e6-9518-252c12d6896b/Courses/BBB/build/arm64-multiplatform}"
+
+lock_field() { awk -v c="$1" -v n="$2" '$1==c{print $n}' "${ROOT}/versions.lock"; }
+
+add_sub() {
+  local name="$1" ref_local="$2" fork_url="$3" sha="$4"
+  local path="sources/${name}"
+  [ -e "${path}" ] && { echo ">> ${path} already present, skipping add"; return 0; }
+
+  local refopt=()
+  [ -d "${ref_local}/.git" ] && refopt=(--reference "${ref_local}")
+
+  echo ">> adding submodule ${name} -> ${fork_url}"
+  git submodule add "${refopt[@]}" "${fork_url}" "${path}"
+  git -C "${path}" fetch --tags origin
+  git -C "${path}" checkout --quiet "${sha}"
+  echo ">> ${name} pinned to ${sha}"
+}
+
+add_sub u-boot "${REF_UBOOT}" \
+  "https://github.com/${GH_USER}/u-boot.git" \
+  "$(lock_field u-boot 4)"
+
+add_sub arm64-multiplatform "${REF_KBUILD}" \
+  "https://github.com/${GH_USER}/arm64-multiplatform.git" \
+  "$(lock_field arm64-multiplatform 4)"
+
+cat <<EOF
+
+Submodules wired. Review .gitmodules, then:
+  git add .gitmodules sources
+  git commit -m "Add u-boot & kernel-build submodules pinned to build versions"
+EOF

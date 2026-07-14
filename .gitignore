@@ -1,0 +1,56 @@
+# ---- Build outputs: never commit compiled artifacts or images ----
+/build/
+build/
+deploy/
+*.img
+*.img.xz
+*.wic
+*.wic.xz
+
+# Boot / firmware binaries
+tiboot3.bin
+tispl.bin
+u-boot.img
+sysfw.itb
+*.itb
+*.bin
+*.dtb
+*.dtbo
+Image
+Image.gz
+zImage
+uImage
+vmlinux
+System.map
+
+# Kernel/u-boot in-tree build litter (if built outside build/)
+*.o
+*.a
+*.ko
+*.mod
+*.mod.c
+*.cmd
+.config
+.config.old
+
+# Firmware repos fetched by scripts (pinned, not tracked)
+/sources/optee_os/
+/sources/trusted-firmware-a/
+/sources/ti-linux-firmware/
+
+# Downloaded toolchains / kernel source cache
+/dl/
+/ignore/
+*.tar.xz
+*.tar.gz
+
+# Application build dirs
+applications/**/build/
+applications/**/cmake-build-*/
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
