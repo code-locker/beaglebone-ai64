@@ -18,6 +18,16 @@ cd "${ROOT}"
 
 GH_USER="${GH_USER:-code-locker}"
 
+# URL scheme for the fork remotes: "ssh" (git@github.com:...) or "https".
+GIT_PROTO="${GIT_PROTO:-https}"
+fork_url() { # $1 = repo name
+  if [ "${GIT_PROTO}" = "ssh" ]; then
+    echo "git@github.com:${GH_USER}/$1.git"
+  else
+    echo "https://github.com/${GH_USER}/$1.git"
+  fi
+}
+
 # Optional: existing local clones to speed up the add (set to your paths).
 REF_UBOOT="${REF_UBOOT:-/media/abhishekkumark/cf83b77e-dc34-45e6-9518-252c12d6896b/Courses/BBB/build/u-boot}"
 REF_KBUILD="${REF_KBUILD:-/media/abhishekkumark/cf83b77e-dc34-45e6-9518-252c12d6896b/Courses/BBB/build/arm64-multiplatform}"
@@ -40,11 +50,11 @@ add_sub() {
 }
 
 add_sub u-boot "${REF_UBOOT}" \
-  "https://github.com/${GH_USER}/u-boot.git" \
+  "$(fork_url u-boot)" \
   "$(lock_field u-boot 4)"
 
 add_sub arm64-multiplatform "${REF_KBUILD}" \
-  "https://github.com/${GH_USER}/arm64-multiplatform.git" \
+  "$(fork_url arm64-multiplatform)" \
   "$(lock_field arm64-multiplatform 4)"
 
 cat <<EOF
