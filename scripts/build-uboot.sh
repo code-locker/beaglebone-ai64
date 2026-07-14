@@ -50,12 +50,30 @@ make -C "${UBOOT}" O="${ROOT}/build/u-boot-a72" -j"${JOBS}" \
   BINMAN_INDIRS="${TIFW}"
 
 echo "==> collecting outputs into ${DEPLOY}"
-# R5 build yields tiboot3-*.bin (HS-FS on BBAI64); A72 yields tispl.bin/u-boot.img
-cp -v "${ROOT}/build/u-boot-r5"/tiboot3*.bin "${DEPLOY}/tiboot3.bin" 2>/dev/null || \
-  cp -v "${ROOT}/build/u-boot-r5"/tiboot3.bin "${DEPLOY}/tiboot3.bin"
-cp -v "${ROOT}/build/u-boot-a72/tispl.bin"   "${DEPLOY}/tispl.bin"
-cp -v "${ROOT}/build/u-boot-a72/u-boot.img"  "${DEPLOY}/u-boot.img"
-[ -f "${ROOT}/build/u-boot-a72/sysfw.itb" ] && cp -v "${ROOT}/build/u-boot-a72/sysfw.itb" "${DEPLOY}/" || true
+R5="${ROOT}/build/u-boot-r5"
+A72="${ROOT}/build/u-boot-a72"
 
-echo "==> done. Boot binaries in ${DEPLOY}/"
-ls -la "${DEPLOY}"
+# Copy the first candidate that exists (following symlinks) to $1, else fail.
+collect() {
+  local dest="$1"; shift
+  local f
+  for f in "$@"; do
+    if [ -e "${f}" ]; then cp -Lv "${f}" "${dest}"; return 0; fi
+  done
+  echo "!! none of these outputs exist for ${dest##*/}: $*" >&2
+  return 1
+}
+
+# BeagleBone AI-64 is GP (general-purpose) TDA4VM silicon (split boot flow).
+#   R5 build : binman emits tiboot3.bin / sysfw.itb as symlinks -> *-gp-evm.*
+#              (cp -L follows them). sysfw.itb is REQUIRED on J721E — omitting
+#              it makes the R5 SPL banner appear then hang.
+#   A72 build: the bootable FITs are the *_unsigned files. The plain u-boot.img
+#              is the signed-flow artifact and must NOT be used on GP silicon.
+collect "${DEPLOY}/tiboot3.bin" "${R5}/tiboot3.bin"           "${R5}"/tiboot3-*-gp-evm.bin
+collect "${DEPLOY}/sysfw.itb"   "${R5}/sysfw.itb"             "${R5}"/sysfw-*-gp-evm.itb
+collect "${DEPLOY}/tispl.bin"   "${A72}/tispl.bin_unsigned"   "${A72}/tispl.bin"
+collect "${DEPLOY}/u-boot.img"  "${A72}/u-boot.img_unsigned"  "${A72}/u-boot.img"
+
+echo "==> done. Boot binaries in ${DEPLOY}/ (copy all 4 to the FAT boot partition):"
+ls -lL "${DEPLOY}"
