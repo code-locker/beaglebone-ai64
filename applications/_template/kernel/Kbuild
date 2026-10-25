@@ -1,0 +1,4 @@
+# Kernel objects of this application. One line per module; multi-file modules:
+#   obj-m := tmpl_drv.o
+#   tmpl_drv-y := core.o hw.o
+obj-m := tmpl_drv.o

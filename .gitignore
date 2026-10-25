@@ -55,3 +55,8 @@ applications/**/cmake-build-*/
 *.swp
 *~
 .DS_Store
+
+# Out-of-tree module build litter (applications/*/kernel/)
+applications/**/kernel/modules.order
+applications/**/kernel/Module.symvers
+applications/**/kernel/.*.cmd

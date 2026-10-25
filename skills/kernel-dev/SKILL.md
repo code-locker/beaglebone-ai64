@@ -1,59 +1,58 @@
 ---
 name: kernel-dev
-description: Modify, rebuild, and deploy the BeagleBone AI-64 Linux kernel (6.18.x-k3 via RobertCNelson arm64-multiplatform) — kernel config changes, device-tree edits, in-tree drivers, out-of-tree modules — and record the change in the code-locker fork. Use for any kernel, driver, DTS, or module work.
+description: Cross-compile, modify, and test the BeagleBone AI-64 Linux kernel (6.18.x-k3 via RobertCNelson arm64-multiplatform) — config changes, device-tree edits, in-tree drivers, incremental rebuilds, making changes permanent as patches in the code-locker fork, installing the kernel on the board as a .deb, and verifying/rolling back. Use for any kernel, DTS, or in-tree driver work, or "how do I build/test the kernel".
 ---
 
 # Kernel development
 
-> Status: rebuild loop follows the arm64-multiplatform scripts; out-of-tree
-> toolchain path and deploy steps not yet verified here.
+> Status: build-side flow checked against the arm64-multiplatform scripts;
+> board install (deploy-kernel.sh) not yet verified on hardware.
 
-Kernel tree is produced by `sources/arm64-multiplatform` (submodule → `code-locker/arm64-multiplatform`).
-After the first `./scripts/build-kernel.sh`, the actual linux source is in
-`sources/arm64-multiplatform/KERNEL/`.
+Full guide: `docs/build/KERNEL.md`. Application-owned kernel code (out-of-tree
+modules) is a separate path: `app-kernel-module`.
 
-## Edit → rebuild loop
-
-```bash
-cd sources/arm64-multiplatform
-$EDITOR KERNEL/<file>                 # driver / dts / Kconfig change
-./tools/rebuild.sh                    # incremental rebuild (keeps your KERNEL/ edits)
-```
-
-- **Do not** re-run `./build_kernel.sh` after editing `KERNEL/` — it re-extracts
-  and re-patches the tree and discards uncommitted edits.
-- Config: `rebuild.sh` opens menuconfig; the resulting config is saved to
-  `patches/defconfig` — commit that if the change should persist.
-- Board DTS: `KERNEL/arch/arm64/boot/dts/ti/k3-j721e-beagleboneai64*.dts*`.
-- Persisting source edits: arm64-multiplatform applies `patches/` on a fresh
-  build. Turn each `KERNEL/` change into a patch (`git -C KERNEL format-patch`)
-  under `patches/` and wire it into `patch.sh`, otherwise it is lost on a clean build.
-
-Then copy artifacts into the common dir: `./scripts/build-kernel.sh` collects
-`deploy/` into `build/kernel/` (or copy manually).
-
-## Out-of-tree module
+## Loop
 
 ```bash
-make -C sources/arm64-multiplatform/KERNEL M=$PWD \
-     ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules
+./scripts/build-kernel.sh                            # first time (full: fetch + patch + build)
+$EDITOR sources/arm64-multiplatform/KERNEL/<file>
+REBUILD=1 ./scripts/build-kernel.sh                  # incremental, keeps KERNEL/ edits
+BOARD=debian@<board-ip> ./scripts/deploy-kernel.sh --reboot
+ssh debian@<board-ip> 'uname -r; dmesg --level=err,warn | head'
 ```
 
-Use the same toolchain the kernel was built with if you hit vermagic /
-compiler-mismatch warnings (`sources/arm64-multiplatform/dl/gcc-*/bin/aarch64-linux-`).
-Put module sources under `applications/<name>/` like any other app.
+`build-kernel.sh` also rebuilds every `applications/*/kernel/` module against
+the new tree (`APP_MODULES=0` to skip).
 
-## Deploy & test
+## Rules that bite
 
-See `deploy-and-test` for copying `Image`, dtbs, and modules to the board.
-Verify on target: `uname -a`, `dmesg | tail`, `modinfo <mod>`.
+- Full `./scripts/build-kernel.sh`, `build_kernel.sh`, and `build_deb.sh` all
+  **re-check-out and re-patch `KERNEL/`** — uncommitted edits there are lost.
+  Use `REBUILD=1` while iterating; `deploy-kernel.sh` packages the existing
+  tree with `make bindeb-pkg` (same options as build_deb.sh) for this reason.
+- A change is permanent only as a patch in the fork:
+  `KERNEL/` commit → `git format-patch` into `patches/local/` → `dir 'local'`
+  appended at the end of `patch.sh` → commit/push in `sources/arm64-multiplatform`
+  → bump submodule + `versions.lock` here. Confirm with one full build.
+- Config changes: menuconfig during the build saves to `patches/defconfig`; commit it in the fork.
+- Compiler: always the one in `sources/arm64-multiplatform/.CC` (`CC=<prefix>`), never the distro gcc.
+- Out-of-tree modules must be rebuilt after any kernel config/version change.
 
-## Record it
+## Where things are
 
-```bash
-cd sources/arm64-multiplatform
-git switch -c feat/<thing> && git commit -am "<area>: <change>"
-git push origin feat/<thing>          # → code-locker/arm64-multiplatform
-cd ../.. && git add sources/arm64-multiplatform   # bump pointer
-# update the arm64-multiplatform sha in versions.lock, commit on a develop feature branch
-```
+| What | Path |
+|---|---|
+| board DTS | `KERNEL/arch/arm64/boot/dts/ti/k3-j721e-beagleboneai64.dts` |
+| version / toolchain | `sources/arm64-multiplatform/version.sh` |
+| patch order | `sources/arm64-multiplatform/patch.sh` |
+| outputs | `build/kernel/` (Image, dtbs/modules tarballs, config, linux-image .deb) |
+
+## Board-side checks
+
+| Symptom | Likely cause |
+|---|---|
+| still old `uname -r` | boot menu picked the old kernel; check serial console / `/boot` |
+| panic, no rootfs | initrd not generated (`dpkg -i` errors) or wrong `root=` |
+| module `Invalid module format` | module built against a different tree/config |
+
+Rollback: previous kernel from the boot menu, then `sudo apt remove linux-image-<bad>`.

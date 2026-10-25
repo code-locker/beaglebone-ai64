@@ -21,6 +21,9 @@ layout and `versions.lock` for pinned upstream commits.
   (CI auto-deletes the merged branch). Details: `skills/git-workflow/`.
 - Never commit build outputs or images (`build/`, `*.img*`, boot binaries).
 - Moving a submodule or firmware pin ⇒ update `versions.lock` in the same commit.
+- Apps: `applications/<app>/{user,kernel,test}`; kernel code for an app stays
+  in its `kernel/` (out-of-tree module), built with the kernel — `skills/app-kernel-module/`.
+- Never run a full kernel build over uncommitted `KERNEL/` edits; use `REBUILD=1`.
 
 ## Skills — keep adding them
 

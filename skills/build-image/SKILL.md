@@ -17,6 +17,7 @@ sudo apt install -y git build-essential bison flex libssl-dev bc make gcc \
   device-tree-compiler swig python3-dev python3-setuptools \
   python3-pyelftools python3-yaml python3-jsonschema yamllint \
   libgnutls28-dev libncurses-dev uuid-dev libyaml-dev u-boot-tools fakeroot
+sudo apt install -y dpkg-dev cmake g++-aarch64-linux-gnu   # kernel .deb + applications
 ```
 
 Install the Python bits from **apt, not pip** (PEP 668). Package is `yamllint`,
@@ -31,7 +32,12 @@ not `python3-yamllint`.
 ```
 
 The kernel build downloads linux-stable + a kernel.org gcc toolchain on first
-run (several GB, slow). Rebuild after editing kernel sources: see `kernel-dev`.
+run (several GB, slow), then builds every `applications/*/kernel/` module
+against the new tree into `build/apps/<app>/kernel/` (`APP_MODULES=0` skips).
+After editing `KERNEL/`, use `REBUILD=1 ./scripts/build-kernel.sh` — a plain run
+re-patches the tree and drops the edits. More: `kernel-dev`.
+
+Disk: plan ~30–40 GB free (kernel clone + objects are most of it).
 
 Run long builds in the background and tail their output; a full u-boot build is
 minutes, the first kernel build can be an hour+.
