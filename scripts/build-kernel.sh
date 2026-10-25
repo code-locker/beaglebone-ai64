@@ -25,6 +25,12 @@ if [ ! -f "${KDIR}/system.sh" ]; then
   cp "${KDIR}/system.sh.sample" "${KDIR}/system.sh"
 fi
 
+# Two builds in the same KERNEL/ tree corrupt each other's objects
+# ("fixdep: error opening file ... .o.d"), so allow only one at a time.
+mkdir -p "${ROOT}/build"
+exec 9>"${ROOT}/build/.kernel-build.lock"
+flock -n 9 || { echo "!! another kernel build is already running in this workspace" >&2; exit 1; }
+
 cd "${KDIR}"
 if [ "${REBUILD:-0}" = 1 ] && [ -d "${KDIR}/KERNEL" ]; then
   echo ">> incremental kernel rebuild (keeps edits in ${KDIR}/KERNEL/)"
