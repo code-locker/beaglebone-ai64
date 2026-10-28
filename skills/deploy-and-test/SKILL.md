@@ -49,6 +49,13 @@ Then add/point an extlinux label at the new kernel, keeping the old one as fallb
 On a running board the easier path is the Debian package: `(cd sources/arm64-multiplatform && ./build_deb.sh)`,
 `scp` the `.deb`, `sudo dpkg -i` on the board.
 
+## Network boot (TFTP / NFS)
+
+To test a kernel without rewriting the SD card, TFTP `Image` + DTB from U-Boot
+(`tftp ${kernel_addr_r} ...; tftp ${fdt_addr_r} ...; booti ${kernel_addr_r} - ${fdt_addr_r}`)
+— the default env addresses (`0x82000000` / `0x88000000`) are the right ones.
+Full host setup, memory map, NFS root: `docs/build/TFTP-BOOT.md`.
+
 ## Serial console
 
 3-pin UART debug header, 3.3 V TTL USB-serial adapter, **115200 8N1**:
