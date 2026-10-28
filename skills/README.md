@@ -10,8 +10,9 @@ These are Claude skills (`<topic>/SKILL.md`, loaded via `.claude/skills` → `sk
 
 - [workspace-setup/](workspace-setup/) — personal code-locker identity on any PC, clone, verify.
 - [build-image/](build-image/) — build boot chain + kernel, prerequisites, failure table.
-- [kernel-dev/](kernel-dev/) — edit/rebuild kernel, DTS, modules; bump the fork.
-- [new-application/](new-application/) — new app from `_template`, cross-compile, run.
+- [kernel-dev/](kernel-dev/) — cross-compile/edit/rebuild the kernel, persist as patches, install & test on board.
+- [app-kernel-module/](app-kernel-module/) — an app's kernel part: out-of-tree module built with the kernel.
+- [new-application/](new-application/) — new app (user + optional kernel part), cross-compile, run.
 - [deploy-and-test/](deploy-and-test/) — SD card / board deploy, serial console, boot debug.
 - [git-workflow/](git-workflow/) — develop branch model, submodule bumps, switching PCs.
 - [add-skill/](add-skill/) — how to add or update a skill here.

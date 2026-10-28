@@ -33,7 +33,11 @@ sync && sudo umount /mnt
 
 ## Kernel
 
-Inspect the card's boot config first (`/boot/firmware/extlinux/extlinux.conf`
+**Running board (preferred):** `BOARD=debian@<board-ip> ./scripts/deploy-kernel.sh --reboot`
+— packages the current `KERNEL/` tree as a linux-image `.deb`, `dpkg -i`'s it,
+keeps the old kernel as fallback. Details: `docs/build/KERNEL.md` §5–6.
+
+**SD card (offline / board not booting):** inspect the card's boot config first (`/boot/firmware/extlinux/extlinux.conf`
 or `/boot/uEnv.txt` on the rootfs) to see which kernel/dtb it loads, then install
 alongside rather than over the working kernel:
 
@@ -46,8 +50,15 @@ sudo mkdir -p $ROOTFS/boot/dtbs/$V && sudo tar -xf build/kernel/$V-dtbs.tar.zst 
 ```
 
 Then add/point an extlinux label at the new kernel, keeping the old one as fallback.
-On a running board the easier path is the Debian package: `(cd sources/arm64-multiplatform && ./build_deb.sh)`,
-`scp` the `.deb`, `sudo dpkg -i` on the board.
+
+## Applications
+
+```bash
+BOARD=debian@<board-ip> ./scripts/deploy-app.sh <app> --run   # copy build/apps/<app>/ → ~/apps/<app>/, run test/on-board.sh
+```
+
+Kernel modules only load on the kernel they were built against — deploy the
+kernel first (see `app-kernel-module`).
 
 ## Serial console
 

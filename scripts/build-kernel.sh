@@ -3,6 +3,11 @@
 # build-kernel.sh — build the 6.18.x-k3 arm64 kernel for BeagleBone AI-64 using
 # RobertCNelson's arm64-multiplatform build system (tracked as a submodule).
 # It downloads linux-stable 6.18.38 + the aarch64 gcc toolchain on first run.
+# Then builds the kernel/ part of every application against the fresh tree.
+#
+#   ./scripts/build-kernel.sh             # full build: re-fetch + re-patch KERNEL/
+#   REBUILD=1 ./scripts/build-kernel.sh   # incremental: keep edits in KERNEL/
+#   APP_MODULES=0 ...                     # skip building application modules
 #
 # SPDX-License-Identifier: MIT
 set -euo pipefail
@@ -20,9 +25,21 @@ if [ ! -f "${KDIR}/system.sh" ]; then
   cp "${KDIR}/system.sh.sample" "${KDIR}/system.sh"
 fi
 
+# Two builds in the same KERNEL/ tree corrupt each other's objects
+# ("fixdep: error opening file ... .o.d"), so allow only one at a time.
+mkdir -p "${ROOT}/build"
+exec 9>"${ROOT}/build/.kernel-build.lock"
+flock -n 9 || { echo "!! another kernel build is already running in this workspace" >&2; exit 1; }
+
 cd "${KDIR}"
-echo ">> building kernel (this downloads linux-stable + toolchain on first run)"
-./build_kernel.sh
+if [ "${REBUILD:-0}" = 1 ] && [ -d "${KDIR}/KERNEL" ]; then
+  echo ">> incremental kernel rebuild (keeps edits in ${KDIR}/KERNEL/)"
+  ./tools/rebuild.sh
+else
+  # build_kernel.sh re-clones and re-patches KERNEL/ — uncommitted edits there are lost.
+  echo ">> building kernel (this downloads linux-stable + toolchain on first run)"
+  ./build_kernel.sh
+fi
 
 # Collect kernel artifacts into the common build/ folder (alongside the u-boot
 # boot files in build/deploy), so every compiled image lives under build/.
@@ -39,15 +56,25 @@ done
 shopt -u nullglob
 [ "${copied}" -gt 0 ] || echo "!! no kernel artifacts found in ${KDEPLOY}" >&2
 
+# Application kernel parts are built right after the kernel, with the same
+# tree and compiler, so their modules always match this kernel.
+if [ "${APP_MODULES:-1}" = 1 ]; then
+  for kb in "${ROOT}"/applications/*/kernel/Kbuild; do
+    [ -f "${kb}" ] || continue
+    app="$(basename "$(dirname "$(dirname "${kb}")")")"
+    [ "${app}" = _template ] && continue
+    "${ROOT}/scripts/build-app.sh" "${app}" kernel
+  done
+fi
+
 cat <<EOF
 
 Kernel build finished. Artifacts collected under:
   ${DEST}/        (Image, dtbs, config, modules tarball)
 (originals also remain in ${KDEPLOY}/)
 
-Optional Debian package:
-  (cd ${KDIR} && ./build_deb.sh)
-
 Rebuild after editing files in ${KDIR}/KERNEL/:
-  (cd ${KDIR} && ./tools/rebuild.sh)
+  REBUILD=1 ./scripts/build-kernel.sh
+Install on a running board:
+  BOARD=debian@<board-ip> ./scripts/deploy-kernel.sh --reboot
 EOF

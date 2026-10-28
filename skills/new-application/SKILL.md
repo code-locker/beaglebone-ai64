@@ -1,49 +1,51 @@
 ---
 name: new-application
-description: Create a new BeagleBone AI-64 application under applications/ from the _template, cross-compile it for aarch64 (Cortex-A72) with CMake, and run it on the board. Use when starting a new app, adding a program/demo/test tool, or cross-compiling userspace code for the board.
+description: Create a new BeagleBone AI-64 application under applications/ (userspace part, optional kernel module part, on-board test) with scripts/new-app.sh, cross-compile it for aarch64 with build-app.sh, and run it on the board with deploy-app.sh. Use when starting a new app, adding a program/demo/test tool, or cross-compiling userspace code for the board.
 ---
 
 # New application
 
+Layout and conventions: `applications/README.md`.
+
 ## Create
 
 ```bash
-N=<short-kebab-name>                       # or applicationN, per applications/README.md
-cp -r applications/_template applications/$N
-sed -i "s/project(app /project($N /; s/add_executable(app /add_executable($N /; s/TARGETS app /TARGETS $N /" \
-    applications/$N/CMakeLists.txt
+./scripts/new-app.sh <app>               # user/ + kernel/ + test/
+./scripts/new-app.sh <app> --no-kernel   # userspace only
 ```
 
-Rewrite `applications/$N/README.md`: one-line purpose, build, run, and any
-device access (GPIO/I2C/SPI `/dev` nodes, overlays, permissions).
+`<app>` = `[a-z][a-z0-9_]*`; replaces the `tmpl` placeholder everywhere
+(binary `<app>`, module `<app>_drv`, `/dev/<app>_drv`). Then rewrite
+`applications/<app>/README.md`: purpose, device access, how to run.
 
 ## Build
 
-Host cross-compile (needs `gcc-aarch64-linux-gnu g++-aarch64-linux-gnu`):
+Host needs `gcc-aarch64-linux-gnu g++-aarch64-linux-gnu cmake` (+ the kernel
+built once if there is a `kernel/` part).
 
 ```bash
-cd applications/$N
-cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=toolchain-aarch64.cmake
-cmake --build build -j"$(nproc)"
-file build/$N                              # → ELF 64-bit ARM aarch64
+./scripts/build-app.sh <app>             # all → build/apps/<app>/{bin,kernel,test}
+./scripts/build-app.sh <app> user        # userspace only
+file build/apps/<app>/bin/<app>          # → ELF 64-bit ARM aarch64
 ```
 
-Native on the board: `cmake -S . -B build && cmake --build build`.
+User part uses `applications/cmake/toolchain-aarch64.cmake`. C++: change
+`LANGUAGES C` → `C CXX` in `user/CMakeLists.txt`. Linking board libraries
+(e.g. libgpiod) when cross-compiling needs a sysroot (`CMAKE_SYSROOT`) — or build
+the user part natively on the board.
 
-Adding C++: change `LANGUAGES C` → `C CXX`. Linking target libs (e.g. libgpiod)
-when cross-compiling needs a sysroot — set `CMAKE_SYSROOT` in the toolchain
-file, or just build natively on the board.
+Kernel part: see `app-kernel-module`.
 
 ## Run
 
 ```bash
-scp build/$N debian@<board-ip>:~ && ssh debian@<board-ip> ./$N
+BOARD=debian@<board-ip> ./scripts/deploy-app.sh <app>         # copy to ~/apps/<app>/
+BOARD=debian@<board-ip> ./scripts/deploy-app.sh <app> --run   # + run test/on-board.sh
 ```
 
-(`debian` is the default user on BeagleBoard Debian images.)
+Extend `test/on-board.sh` so it exits non-zero on failure — it is the app's hardware test.
 
 ## Rules
 
-- Self-contained folder; `build/` dirs are git-ignored — never commit binaries.
-- Kernel modules also live here; build them per `kernel-dev`.
+- Self-contained folder; `build/` and `*.ko` are git-ignored — never commit binaries.
 - Commit on a `feat/<app>` branch off `develop` (see `git-workflow`).

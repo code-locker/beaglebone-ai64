@@ -7,6 +7,12 @@ The scripts under [`../../scripts/`](../../scripts/) automate all of this; the
 manual commands below document what each step does. My original step notes are in
 [`../upstream/uboot-bbai64-build-steps.pdf`](../upstream/uboot-bbai64-build-steps.pdf).
 
+| Guide | Covers |
+|---|---|
+| **BUILD.md** (this file) | host setup, boot chain (TF-A → OP-TEE → U-Boot), first kernel build, SD card |
+| [KERNEL.md](KERNEL.md) | kernel internals, edit → rebuild loop, making changes permanent, install & test on the board |
+| [APP-KERNEL-CODE.md](APP-KERNEL-CODE.md) | application kernel modules compiled alongside the kernel |
+
 ## 0. Host prerequisites (Debian/Ubuntu host)
 
 ```bash
@@ -92,6 +98,11 @@ build/kernel/
 (The originals also remain in `sources/arm64-multiplatform/deploy/`.) All of
 `build/` is git-ignored.
 
+Right after the kernel, the `kernel/` part of every application is compiled
+against the same tree into `build/apps/<app>/kernel/` (skip with `APP_MODULES=0`) —
+see [APP-KERNEL-CODE.md](APP-KERNEL-CODE.md). Changing the kernel, rebuilding
+incrementally, and installing it on the board: [KERNEL.md](KERNEL.md).
+
 ## 4. Deploy to SD card
 
 > Reference production image: **BBAI64 Debian 13.5 2026-05-19 XFCE (v6.18.x-k3)**.
@@ -99,8 +110,11 @@ build/kernel/
 The boot binaries go on the FAT boot partition:
 
 ```
-tiboot3.bin  tispl.bin  u-boot.img
+tiboot3.bin  sysfw.itb  tispl.bin  u-boot.img
 ```
+
+`sysfw.itb` is required on J721E — without it the R5 SPL banner prints and the
+boot hangs.
 
 For a full card, flash the BeagleBoard reference `.img.xz` first, then overwrite
 the boot binaries / kernel with your freshly-built ones. Do **not** commit any

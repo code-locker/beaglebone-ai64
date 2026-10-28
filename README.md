@@ -25,13 +25,14 @@ beaglebone-ai64/
 │
 ├── docs/
 │   ├── upstream/             # open-license reference docs (SRM) + datasheet links
-│   ├── build/                # the master build guide (BUILD.md)
+│   ├── build/                # BUILD.md, KERNEL.md, APP-KERNEL-CODE.md
 │   └── mine/                 # documents I write / publish
 │
 ├── skills/                   # skills & know-how learned here, one topic per folder
 │
-├── applications/             # my own apps — application1, application2, …
-│   └── _template/            # copy this to start a new app (README + CMake + steps)
+├── applications/             # my own apps: <app>/{user,kernel,test} (see applications/README.md)
+│   ├── _template/            # used by scripts/new-app.sh
+│   └── cmake/                # shared aarch64 toolchain file
 │
 ├── sources/                  # git submodules → my forks of u-boot & kernel-build
 │   ├── u-boot/               # submodule → code-locker/u-boot
@@ -41,7 +42,11 @@ beaglebone-ai64/
     ├── bootstrap.sh          # init submodules + fetch firmware repos (pinned)
     ├── fetch-firmware.sh     # clone optee_os / tf-a / ti-linux-firmware (pinned)
     ├── build-uboot.sh        # TF-A + OP-TEE + u-boot → tiboot3/tispl/u-boot.img
-    ├── build-kernel.sh       # RobertCNelson arm64 kernel build
+    ├── build-kernel.sh       # RobertCNelson arm64 kernel build (+ all app modules)
+    ├── deploy-kernel.sh      # kernel → .deb → install on a running board
+    ├── new-app.sh            # new application from the template
+    ├── build-app.sh          # cross-compile an app (user + kernel module)
+    ├── deploy-app.sh         # copy an app to the board and run its test
     └── add-submodules.sh     # one-time helper to wire the submodules
 ```
 

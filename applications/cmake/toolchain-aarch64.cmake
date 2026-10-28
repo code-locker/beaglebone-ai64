@@ -1,5 +1,5 @@
 # CMake toolchain file: cross-compile on an x86_64 host for the BBAI64 (aarch64).
-# Usage: cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=toolchain-aarch64.cmake
+# Usage: ./scripts/build-app.sh <app> user   (or: cmake -S user -B build -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchain-aarch64.cmake)
 #
 # Requires: sudo apt install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
