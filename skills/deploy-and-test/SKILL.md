@@ -60,6 +60,13 @@ BOARD=debian@<board-ip> ./scripts/deploy-app.sh <app> --run   # copy build/apps/
 Kernel modules only load on the kernel they were built against — deploy the
 kernel first (see `app-kernel-module`).
 
+## Network boot (TFTP / NFS)
+
+To test a kernel without rewriting the SD card, TFTP `Image` + DTB from U-Boot
+(`tftp ${kernel_addr_r} ...; tftp ${fdt_addr_r} ...; booti ${kernel_addr_r} - ${fdt_addr_r}`)
+— the default env addresses (`0x82000000` / `0x88000000`) are the right ones.
+Full host setup, memory map, NFS root: `docs/build/TFTP-BOOT.md`.
+
 ## Serial console
 
 3-pin UART debug header, 3.3 V TTL USB-serial adapter, **115200 8N1**:
