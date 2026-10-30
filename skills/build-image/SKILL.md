@@ -55,7 +55,8 @@ All **four** boot files are needed — `BUILD.md` §4 lists three, but on J721E
 
 | Symptom | Cause / fix |
 |---|---|
-| `Unknown entry type 'ti-board-config'` / binman traceback at the very end | missing `python3-pyelftools`, `swig`, or `yamllint` |
+| `Unknown entry type 'ti-board-config'` / binman traceback at the very end | missing `python3-pyelftools`, `swig`, or `yamllint` — or a Python virtualenv is active, so binman runs the venv's `python3`; `deactivate` first |
+| stale `tiboot3.bin` etc. in `sources/u-boot` after `make distclean` | binman outputs aren't removed by distclean; prefer `O=` builds. Manual U-Boot builds: `docs/build/UBOOT-STANDALONE.md` |
 | `!! missing sources/...` | run `./scripts/bootstrap.sh` |
 | `sources/arm64-multiplatform not populated` | submodules not cloned — `git submodule update --init --recursive` (needs the personal SSH key, see `workspace-setup`) |
 | kernel: random `fixdep: error opening file …/.X.o.d` / `cannot find X.o` across many dirs | two kernel builds ran in the same tree at once — make sure only one runs (build-kernel.sh now holds a lock), then `AUTO_BUILD=1 REBUILD=1 ./scripts/build-kernel.sh` |
