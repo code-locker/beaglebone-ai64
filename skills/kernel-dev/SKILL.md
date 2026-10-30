@@ -37,6 +37,11 @@ the new tree (`APP_MODULES=0` to skip).
 - Config changes: menuconfig during the build saves to `patches/defconfig`; commit it in the fork.
 - Compiler: always the one in `sources/arm64-multiplatform/.CC` (`CC=<prefix>`), never the distro gcc.
 - Out-of-tree modules must be rebuilt after any kernel config/version change.
+- `patches/defconfig` embeds firmware (`CONFIG_EXTRA_FIRMWARE`: `regulatory.db*`,
+  `cadence/mhdp8546.bin`) from `<src>/firmware/`; `patch.sh` puts them there.
+  Using that config on any other tree (kernel.org tarball etc.) fails ~20 min in
+  with `No rule to make target '.../firmware/regulatory.db'` — copy them first.
+  Plain-`make` build without the scripts: `docs/build/KERNEL-STANDALONE.md`.
 
 ## Where things are
 
