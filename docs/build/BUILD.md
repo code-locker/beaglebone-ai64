@@ -10,6 +10,7 @@ manual commands below document what each step does. My original step notes are i
 | Guide | Covers |
 |---|---|
 | **BUILD.md** (this file) | host setup, boot chain (TF-A → OP-TEE → U-Boot), first kernel build, SD card |
+| [UBOOT-STANDALONE.md](UBOOT-STANDALONE.md) | U-Boot by hand with plain `make`: cross compilers, in-tree vs `O=`, distclean, outputs |
 | [KERNEL.md](KERNEL.md) | kernel internals, edit → rebuild loop, making changes permanent, install & test on the board |
 | [APP-KERNEL-CODE.md](APP-KERNEL-CODE.md) | application kernel modules compiled alongside the kernel |
 
