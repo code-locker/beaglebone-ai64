@@ -49,6 +49,10 @@ System.map
 applications/**/build/
 applications/**/cmake-build-*/
 
+# Vendor docs (TI copyright, not redistributable) — local only, see docs/upstream/DATASHEETS.md
+docs/upstream/TDA4VM-TRM/
+docs/upstream/*.zip
+
 # Editor / OS
 .vscode/
 .idea/

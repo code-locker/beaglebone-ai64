@@ -29,6 +29,23 @@ linked here rather than redistributed.
 - U-Boot (BeagleBoard fork): https://github.com/beagleboard/u-boot
 - Kernel build scripts: https://github.com/RobertCNelson/arm64-multiplatform
 
-> To keep vendor PDFs handy offline, download them into this folder — they are
-> covered by `*.pdf` staying **un-ignored** here, but do not push TI/Arm PDFs to
-> the public repo to respect their redistribution terms.
+## Getting the TRM locally
+
+The TI link serves a ZIP (rev D, `spruil1d.zip`, ~325 MB), not a PDF. Extract
+it into `TDA4VM-TRM/` here — that folder is git-ignored, so the PDFs stay local:
+
+```bash
+cd docs/upstream
+curl -L -o spruil1d.zip https://www.ti.com/lit/pdf/spruil1
+unzip spruil1d.zip -d TDA4VM-TRM && rm spruil1d.zip
+```
+
+| File in `TDA4VM-TRM/` | Contents |
+|---|---|
+| `SPRUIL_DRA829_TDA4VM Technical Reference Manual.pdf` | main TRM, 3535 pages — every subsystem, boot, memory map |
+| `DRA829TDA4VM_Registers_Part1..5.pdf` | full register maps (bit-level tables) |
+
+Never commit these: TI's terms don't allow redistribution, and
+`Registers_Part2.pdf` (101 MB) is over GitHub's 100 MB file limit anyway.
+Other vendor PDFs dropped in this folder are **not** ignored — keep them out
+of commits too.
